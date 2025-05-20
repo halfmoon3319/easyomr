@@ -1,0 +1,69 @@
+<!-- main.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>easyOMR 메인</title>
+  <style>
+    body { text-align: center; padding: 30px; font-family: Arial; }
+    .button { padding: 10px 20px; margin: 10px; border: 2px solid #066; border-radius: 10px; cursor: pointer; background: white; }
+    .hidden { display: none; }
+    input { padding: 10px; margin: 10px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <img src="LOGO.png" alt="로고" width="250"><br><br>
+
+  <button class="button" onclick="show('teacher')">선생님</button>
+  <button class="button" onclick="show('student')">학생</button>
+
+  <div id="teacher-section" class="hidden">
+    <button class="button" onclick="generateCode()">코드 생성</button>
+    <div id="codeDisplay"></div>
+    <input type="password" placeholder="비밀번호 입력" id="teacherPwd">
+    <br>
+    <button class="button" onclick="goToTeacherPage()">다음</button>
+  </div>
+
+  <div id="student-section" class="hidden">
+    <input type="text" placeholder="접속 코드 입력" id="studentCode">
+    <input type="password" placeholder="비밀번호 입력" id="studentPwd">
+    <br>
+    <button class="button" onclick="goToStudentPage()">다음</button>
+  </div>
+
+  <script>
+    function show(role) {
+      document.getElementById('teacher-section').classList.add('hidden');
+      document.getElementById('student-section').classList.add('hidden');
+      document.getElementById(role + '-section').classList.remove('hidden');
+    }
+
+    function generateCode() {
+      const code = Math.floor(100000 + Math.random() * 900000);
+      document.getElementById('codeDisplay').innerText = '생성된 코드: ' + code;
+    }
+
+    function goToTeacherPage() {
+      const codeText = document.getElementById('codeDisplay').innerText;
+      const code = codeText.split(': ')[1];
+      const pwd = document.getElementById('teacherPwd').value;
+      if (code && pwd) {
+        window.location.href = `teacher.html?code=${encodeURIComponent(code)}&pwd=${encodeURIComponent(pwd)}`;
+      } else {
+        alert("접속 코드와 비밀번호를 입력하세요.");
+      }
+    }
+
+    function goToStudentPage() {
+      const code = document.getElementById('studentCode').value;
+      const pwd = document.getElementById('studentPwd').value;
+      if (code && pwd) {
+        window.location.href = `student.html?code=${encodeURIComponent(code)}&pwd=${encodeURIComponent(pwd)}`;
+      } else {
+        alert("접속 코드와 비밀번호를 입력하세요.");
+      }
+    }
+  </script>
+</body>
+</html>

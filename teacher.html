@@ -1,0 +1,162 @@
+<!-- teacher.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>정답 입력 페이지</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 30px;
+      position: relative;
+    }
+    input[type='number'], input[type='text'] {
+      padding: 5px;
+      border: 2px solid green;
+      border-radius: 5px;
+    }
+    .input-section {
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 2px solid green;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0fff0;
+    }
+    .back-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      border: 2px solid green;
+      border-radius: 5px;
+      background-color: white;
+      cursor: pointer;
+    }
+    .short-answer-input {
+      width: 300px;
+    }
+    .info-section {
+      margin-top: 10px;
+      margin-bottom: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      color: #064;
+    }
+    .obj-answer-input {
+      width: 60px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <button class="back-button" onclick="goBack()">← 뒤로가기</button>
+
+  <div class="info-section">
+    접속 코드: <span id="display-code">-</span> / 비밀번호: <span id="display-password">-</span>
+  </div>
+
+  <div class="input-section">
+    <label for="count">문항 수:</label>
+    <input type="number" id="count" min="1" style="width: 60px;">
+
+    <label for="shortCount">서답형 문항 수:</label>
+    <input type="number" id="shortCount" min="0" style="width: 60px;">
+
+    <button onclick="generateInputs()">생성</button>
+  </div>
+
+  <table id="answer-table">
+    <thead>
+      <tr>
+        <th>번호</th>
+        <th>객관식 정답</th>
+        <th>서답형 번호</th>
+        <th>서답형 정답</th>
+      </tr>
+    </thead>
+    <tbody id="answer-body">
+      <!-- 정답 입력 행이 이곳에 추가됩니다 -->
+    </tbody>
+  </table>
+
+  <script>
+    function generateInputs() {
+      const count = parseInt(document.getElementById('count').value) || 0;
+      const shortCount = parseInt(document.getElementById('shortCount').value) || 0;
+      const total = Math.max(count, shortCount);
+
+      const tbody = document.getElementById('answer-body');
+      tbody.innerHTML = '';
+
+      for (let i = 1; i <= total; i++) {
+        const row = document.createElement('tr');
+
+        const numCell = document.createElement('td');
+        numCell.textContent = i;
+        row.appendChild(numCell);
+
+        const objCell = document.createElement('td');
+        if (i <= count) {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.classList.add('obj-answer-input');
+          input.setAttribute('data-index', i);
+          input.addEventListener('keydown', handleKeyDown);
+          objCell.appendChild(input);
+        }
+        row.appendChild(objCell);
+
+        const shortNumCell = document.createElement('td');
+        shortNumCell.textContent = i <= shortCount ? i : '';
+        row.appendChild(shortNumCell);
+
+        const shortCell = document.createElement('td');
+        if (i <= shortCount) {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.classList.add('short-answer-input');
+          shortCell.appendChild(input);
+        }
+        row.appendChild(shortCell);
+
+        tbody.appendChild(row);
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Tab' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        const current = event.target;
+        const index = parseInt(current.getAttribute('data-index'));
+        const nextInput = document.querySelector(`input[data-index='${index + 1}']`);
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }
+    }
+
+    function goBack() {
+      window.location.href = 'main.html';
+    }
+
+    // URL 파라미터에서 코드와 비밀번호 가져오기
+    window.onload = function () {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const pwd = params.get('pwd');
+      if (code) document.getElementById('display-code').textContent = code;
+      if (pwd) document.getElementById('display-password').textContent = pwd;
+    }
+  </script>
+</body>
+</html>

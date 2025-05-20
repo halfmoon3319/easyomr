@@ -1,0 +1,90 @@
+<!-- student.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>OMR 정답 입력</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .header {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .omr-table {
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    .omr-table th, .omr-table td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    .omr-table input[type="text"] {
+      width: 40px;
+      padding: 4px;
+    }
+    .written-answer {
+      width: 300px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    접속 코드: <span id="displayCode"></span> | 비밀번호: <span id="displayPassword"></span>
+  </div>
+
+  <table class="omr-table" id="omrTable">
+    <thead>
+      <tr>
+        <th>번호</th>
+        <th>객관식 정답</th>
+        <th>서답형 정답</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <!-- 여기에 자동으로 문항 수 만큼 행이 생성됨 -->
+    </tbody>
+  </table>
+
+  <script>
+    // 저장된 접속 정보 표시
+    document.getElementById("displayCode").textContent = localStorage.getItem("accessCode") || "";
+    document.getElementById("displayPassword").textContent = localStorage.getItem("accessPassword") || "";
+
+    // 문항 수 설정 (예: 교사가 설정한 값)
+    const totalQuestions = 10; // 예시 숫자, 서버나 파라미터 기반으로 변경 가능
+    const tableBody = document.getElementById("tableBody");
+
+    for (let i = 1; i <= totalQuestions; i++) {
+      const row = document.createElement("tr");
+
+      const numberCell = document.createElement("td");
+      numberCell.textContent = i;
+
+      const objectiveInput = document.createElement("input");
+      objectiveInput.setAttribute("type", "text");
+      objectiveInput.setAttribute("maxlength", "1");
+
+      const subjectiveInput = document.createElement("input");
+      subjectiveInput.setAttribute("type", "text");
+      subjectiveInput.classList.add("written-answer");
+
+      const objCell = document.createElement("td");
+      objCell.appendChild(objectiveInput);
+
+      const subCell = document.createElement("td");
+      subCell.appendChild(subjectiveInput);
+
+      row.appendChild(numberCell);
+      row.appendChild(objCell);
+      row.appendChild(subCell);
+
+      tableBody.appendChild(row);
+    }
+  </script>
+</body>
+</html>
