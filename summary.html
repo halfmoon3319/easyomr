@@ -83,7 +83,6 @@
       const objAnswers = data.objAnswers || [];
       const shortAnswers = data.shortAnswers || [];
 
-      // 요약 정보 출력
       document.getElementById("question-summary").innerHTML = `
         <p>객관식 문항 수: ${objAnswers.length}</p>
         <p>서답형 문항 수: ${shortAnswers.length}</p>
@@ -92,7 +91,6 @@
         <p>서답형 정답: ${shortAnswers.join(", ") || "-"}</p>
       `;
 
-      // 교사 정답 테이블 생성
       const answerBody = document.getElementById("answer-body");
       const total = Math.max(objAnswers.length, shortAnswers.length);
       for (let i = 0; i < total; i++) {
@@ -106,7 +104,6 @@
         answerBody.appendChild(row);
       }
 
-      // 학생 제출 정답 비교
       const submitRef = ref(db, 'submissions/' + code);
       onValue(submitRef, (snap) => {
         const students = snap.val();
@@ -114,7 +111,7 @@
         body.innerHTML = "";
 
         if (!students) {
-          body.innerHTML = `<tr><td colspan="4">제출한 학생이 없습니다.</td></tr>`;
+          body.innerHTML = `<tr><td colspan="5">제출한 학생이 없습니다.</td></tr>`;
           return;
         }
 
@@ -125,18 +122,28 @@
 
           const mark = (a, b) => a?.trim().toLowerCase() === b?.trim().toLowerCase() ? 'O' : 'X';
 
-          // 1[O] 2[X] 형식으로 출력
-          const objDisplay = objAnswers.map((_, i) => `${i + 1}[${mark(studentObj[i], objAnswers[i])}]`).join(" ");
-          const shortDisplay = shortAnswers.map((ans, i) => {
+          // 채점 결과 및 점수 계산
+          const objOX = objAnswers.map((ans, i) => {
+            const m = mark(studentObj[i], ans);
+            return `${i + 1}[${m}]`;
+          });
+
+          const shortOX = shortAnswers.map((ans, i) => {
             const input = studentShort[i] || "";
-            return `${i + 1}[${input}][${mark(input, ans)}]`;
-          }).join(" ");
+            const m = mark(input, ans);
+            return `${i + 1}[${input}][${m}]`;
+          });
+
+          const objScore = objOX.filter(s => s.includes('[O]')).length;
+          const shortScore = shortOX.filter(s => s.includes('[O]')).length;
+          const totalScore = objAnswers.length + shortAnswers.length;
 
           const row = document.createElement("tr");
           row.innerHTML = `
             <td>${name}</td>
-            <td>${objDisplay || "-"}</td>
-            <td>${shortDisplay || "-"}</td>
+            <td>${objOX.join(" ") || "-"}</td>
+            <td>${shortOX.join(" ") || "-"}</td>
+            <td>${objScore + shortScore} / ${totalScore}</td>
           `;
           body.appendChild(row);
         }
@@ -173,6 +180,7 @@
         <th>이름</th>
         <th>객관식</th>
         <th>서답형</th>
+        <th>점수</th>
       </tr>
     </thead>
     <tbody id="submission-body"></tbody>
