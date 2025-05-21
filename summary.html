@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>OMR 요약 페이지</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 30px;
+    }
+    .info-section {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #064;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+    }
+    th, td {
+      border: 2px solid green;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0fff0;
+    }
+    h2 {
+      color: #045d3b;
+    }
+  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
+</head>
+<body>
+
+  <div class="info-section">
+    접속 코드: <span id="display-code">-</span> / 비밀번호: <span id="display-password">-</span>
+  </div>
+
+  <h2>교사 정답</h2>
+  <table id="answer-table">
+    <thead>
+      <tr>
+        <th>번호</th>
+        <th>객관식 정답</th>
+        <th>서답형 번호</th>
+        <th>서답형 정답</th>
+      </tr>
+    </thead>
+    <tbody id="answer-body">
+      <!-- 교사 정답이 여기에 표시됩니다 -->
+    </tbody>
+  </table>
+
+  <h2>학생 제출 현황</h2>
+  <table id="submission-table">
+    <thead>
+      <tr>
+        <th>이름</th>
+        <th>객관식 정답</th>
+        <th>서답형 정답</th>
+      </tr>
+    </thead>
+    <tbody id="submission-body">
+      <!-- 학생 제출 내용이 여기에 표시됩니다 -->
+    </tbody>
+  </table>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
+    if (!code) {
+      alert("접속 코드가 없습니다.");
+    }
+
+    document.getElementById("display-code").textContent = code;
+
+    // 교사 입력 정답 불러오기
+    db.ref('omr/' + code).once('value').then(snapshot => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      document.getElementById("display-password").textContent = data.password || '-';
+
+      const objAnswers = data.objAnswers || [];
+      const shortAnswers = data.shortAnswers || [];
+
+      const total = Math.max(objAnswers.length, shortAnswers.length);
+      const tbody = document.getElementById("answer-body");
+
+      for (let i = 0; i < total; i++) {
+        const row = document.createElement('tr');
+
+        const numCell = document.createElement('td');
+        numCell.textContent = i + 1;
+        row.appendChild(numCell);
+
+        const objCell = document.createElement('td');
+        objCell.textContent = objAnswers[i] || '';
+        row.appendChild(objCell);
+
+        const shortNumCell = document.createElement('td');
+        shortNumCell.textContent = shortAnswers[i] ? i + 1 : '';
+        row.appendChild(shortNumCell);
+
+        const shortCell = document.createElement('td');
+        shortCell.textContent = shortAnswers[i] || '';
+        row.appendChild(shortCell);
+
+        tbody.appendChild(row);
+      }
+    });
+
+    // 실시간으로 학생 제출 결과 불러오기
+    db.ref('submissions/' + code).on('value', snapshot => {
+      const data = snapshot.val();
+      const tbody = document.getElementById("submission-body");
+      tbody.innerHTML = ''; // 초기화
+
+      if (!data) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 3;
+        cell.textContent = '아직 제출한 학생이 없습니다.';
+        row.appendChild(cell);
+        tbody.appendChild(row);
+        return;
+      }
+
+      Object.entries(data).forEach(([name, submission]) => {
+        const row = document.createElement('tr');
+
+        const nameCell = document.createElement('td');
+        nameCell.textContent = name;
+        row.appendChild(nameCell);
+
+        const objCell = document.createElement('td');
+        objCell.textContent = (submission.objAnswers || []).join(", ");
+        row.appendChild(objCell);
+
+        const shortCell = document.createElement('td');
+        shortCell.textContent = (submission.shortAnswers || []).join(", ");
+        row.appendChild(shortCell);
+
+        tbody.appendChild(row);
+      });
+    });
+  </script>
+
+</body>
+</html>
