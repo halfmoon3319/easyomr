@@ -1,4 +1,3 @@
-<!-- student.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -8,35 +7,83 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
+      margin: 0;
+      padding: 0;
     }
+
+    .top-bar {
+      width: 100%;
+      padding: 10px 20px;
+      text-align: right;
+      box-sizing: border-box;
+      background-color: #f0f0f0;
+    }
+
+    .top-bar button {
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
     .header {
-      margin-top: 20px;
+      margin-top: 10px;
       font-size: 18px;
       font-weight: bold;
     }
+
     .omr-table {
       margin: 20px auto;
       border-collapse: collapse;
     }
+
     .omr-table th, .omr-table td {
       border: 1px solid #ccc;
       padding: 8px;
       text-align: center;
     }
+
     .omr-table input[type="text"] {
       width: 40px;
       padding: 4px;
+      text-align: center;
     }
+
     .written-answer {
       width: 300px !important;
+    }
+
+    .submission-section {
+      margin: 30px auto;
+      text-align: center;
+    }
+
+    .submission-section input[type="text"] {
+      padding: 6px;
+      width: 200px;
+      font-size: 16px;
+    }
+
+    .submission-section button {
+      padding: 6px 14px;
+      font-size: 16px;
+      margin-left: 10px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
+
+  <!-- 오른쪽 위 돌아가기 버튼 -->
+  <div class="top-bar">
+    <button onclick="goBack()">← 돌아가기</button>
+  </div>
+
+  <!-- 접속 코드 & 비밀번호 표시 -->
   <div class="header">
     접속 코드: <span id="displayCode"></span> | 비밀번호: <span id="displayPassword"></span>
   </div>
 
+  <!-- OMR 입력 테이블 -->
   <table class="omr-table" id="omrTable">
     <thead>
       <tr>
@@ -46,17 +93,28 @@
       </tr>
     </thead>
     <tbody id="tableBody">
-      <!-- 여기에 자동으로 문항 수 만큼 행이 생성됨 -->
+      <!-- 자바스크립트로 자동 생성 -->
     </tbody>
   </table>
 
+  <!-- 이름 입력 및 제출 -->
+  <div class="submission-section">
+    <input type="text" id="studentName" placeholder="이름을 입력하세요">
+    <button onclick="submitAnswers()">제출하기</button>
+  </div>
+
   <script>
-    // 저장된 접속 정보 표시
+    // 돌아가기 버튼 기능
+    function goBack() {
+      window.location.href = "main.html";
+    }
+
+    // 저장된 접속 코드/비밀번호 표시
     document.getElementById("displayCode").textContent = localStorage.getItem("accessCode") || "";
     document.getElementById("displayPassword").textContent = localStorage.getItem("accessPassword") || "";
 
-    // 문항 수 설정 (예: 교사가 설정한 값)
-    const totalQuestions = 10; // 예시 숫자, 서버나 파라미터 기반으로 변경 가능
+    // 문항 수 설정 (예시)
+    const totalQuestions = 10;
     const tableBody = document.getElementById("tableBody");
 
     for (let i = 1; i <= totalQuestions; i++) {
@@ -66,12 +124,14 @@
       numberCell.textContent = i;
 
       const objectiveInput = document.createElement("input");
-      objectiveInput.setAttribute("type", "text");
-      objectiveInput.setAttribute("maxlength", "1");
+      objectiveInput.type = "text";
+      objectiveInput.maxLength = 1;
 
       const subjectiveInput = document.createElement("input");
-      subjectiveInput.setAttribute("type", "text");
+      subjectiveInput.type = "text";
       subjectiveInput.classList.add("written-answer");
+
+      row.appendChild(numberCell);
 
       const objCell = document.createElement("td");
       objCell.appendChild(objectiveInput);
@@ -79,11 +139,33 @@
       const subCell = document.createElement("td");
       subCell.appendChild(subjectiveInput);
 
-      row.appendChild(numberCell);
       row.appendChild(objCell);
       row.appendChild(subCell);
 
       tableBody.appendChild(row);
+    }
+
+    // 제출 버튼 기능
+    function submitAnswers() {
+      const name = document.getElementById("studentName").value.trim();
+      if (!name) {
+        alert("이름을 입력해주세요.");
+        return;
+      }
+
+      const answers = [];
+      const rows = document.querySelectorAll("#tableBody tr");
+      rows.forEach((row, index) => {
+        const obj = row.querySelector("td:nth-child(2) input").value.trim();
+        const sub = row.querySelector("td:nth-child(3) input").value.trim();
+        answers.push({ number: index + 1, objective: obj, subjective: sub });
+      });
+
+      console.log("이름:", name);
+      console.log("정답:", answers);
+      alert("정답이 제출되었습니다. (콘솔을 확인하세요)");
+
+      // 이후 서버로 전송하거나 저장 기능 구현 가능
     }
   </script>
 </body>
