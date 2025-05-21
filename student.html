@@ -2,171 +2,173 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>OMR 정답 입력</title>
+  <title>학생 답안 제출</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
+      font-family: Arial;
+      padding: 30px;
     }
-
-    .top-bar {
-      width: 100%;
-      padding: 10px 20px;
-      text-align: right;
-      box-sizing: border-box;
-      background-color: #f0f0f0;
-    }
-
-    .top-bar button {
-      padding: 6px 12px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .header {
-      margin-top: 10px;
+    .info {
       font-size: 18px;
       font-weight: bold;
+      text-align: center;
+      color: #064;
+      margin-bottom: 20px;
     }
-
-    .omr-table {
-      margin: 20px auto;
+    table {
+      width: 100%;
       border-collapse: collapse;
+      margin-bottom: 30px;
     }
-
-    .omr-table th, .omr-table td {
-      border: 1px solid #ccc;
-      padding: 8px;
+    th, td {
+      border: 2px solid green;
+      padding: 10px;
       text-align: center;
     }
-
-    .omr-table input[type="text"] {
-      width: 40px;
-      padding: 4px;
+    th {
+      background-color: #f0fff0;
+    }
+    .input-field {
+      width: 60px;
       text-align: center;
     }
-
-    .written-answer {
-      width: 300px !important;
+    .short-input {
+      width: 300px;
     }
-
-    .submission-section {
-      margin: 30px auto;
+    .footer {
       text-align: center;
+      margin-top: 20px;
     }
-
-    .submission-section input[type="text"] {
-      padding: 6px;
-      width: 200px;
-      font-size: 16px;
+    input[type='text'] {
+      padding: 5px;
+      border: 2px solid green;
+      border-radius: 5px;
     }
-
-    .submission-section button {
-      padding: 6px 14px;
-      font-size: 16px;
-      margin-left: 10px;
+    button {
+      padding: 10px 20px;
+      background-color: green;
+      color: white;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
     }
   </style>
-</head>
-<body>
+  <!-- Firebase 설정 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-database.js";
 
-  <!-- 오른쪽 위 돌아가기 버튼 -->
-  <div class="top-bar">
-    <button onclick="goBack()">← 돌아가기</button>
-  </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBuZ-41dJac-F-6F0Lw3latwXRPBM1p-KE",
+      authDomain: "easyomr-29821.firebaseapp.com",
+      databaseURL: "https://easyomr-29821-default-rtdb.firebaseio.com",
+      projectId: "easyomr-29821",
+      storageBucket: "easyomr-29821.firebasestorage.app",
+      messagingSenderId: "757486502773",
+      appId: "1:757486502773:web:dcd7bc78d1a56a1ef7493c",
+      measurementId: "G-994805JEZ7"
+    };
 
-  <!-- 접속 코드 & 비밀번호 표시 -->
-  <div class="header">
-    접속 코드: <span id="displayCode"></span> | 비밀번호: <span id="displayPassword"></span>
-  </div>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-  <!-- OMR 입력 테이블 -->
-  <table class="omr-table" id="omrTable">
-    <thead>
-      <tr>
-        <th>번호</th>
-        <th>객관식 정답</th>
-        <th>서답형 정답</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-      <!-- 자바스크립트로 자동 생성 -->
-    </tbody>
-  </table>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const pwd = params.get("pwd");
 
-  <!-- 이름 입력 및 제출 -->
-  <div class="submission-section">
-    <input type="text" id="studentName" placeholder="이름을 입력하세요">
-    <button onclick="submitAnswers()">제출하기</button>
-  </div>
+    document.addEventListener("DOMContentLoaded", async () => {
+      if (!code || !pwd) {
+        alert("접속 코드 또는 비밀번호가 누락되었습니다.");
+        return;
+      }
 
-  <script>
-    // 돌아가기 버튼 기능
-    function goBack() {
-      window.location.href = "main.html";
-    }
+      document.getElementById("display-code").textContent = code;
+      document.getElementById("display-password").textContent = pwd;
 
-    // 저장된 접속 코드/비밀번호 표시
-    document.getElementById("displayCode").textContent = localStorage.getItem("accessCode") || "";
-    document.getElementById("displayPassword").textContent = localStorage.getItem("accessPassword") || "";
+      // Firebase에서 OMR 데이터 가져오기
+      const snapshot = await get(ref(db, 'omr/' + code));
+      const data = snapshot.val();
 
-    // 문항 수 설정 (예시)
-    const totalQuestions = 10;
-    const tableBody = document.getElementById("tableBody");
+      if (!data) {
+        alert("해당 접속 코드에 대한 데이터가 없습니다.");
+        return;
+      }
 
-    for (let i = 1; i <= totalQuestions; i++) {
-      const row = document.createElement("tr");
+      if (data.password !== pwd) {
+        alert("비밀번호가 일치하지 않습니다.");
+        return;
+      }
 
-      const numberCell = document.createElement("td");
-      numberCell.textContent = i;
+      const objAnswers = data.objAnswers || [];
+      const shortAnswers = data.shortAnswers || [];
 
-      const objectiveInput = document.createElement("input");
-      objectiveInput.type = "text";
-      objectiveInput.maxLength = 1;
+      const total = Math.max(objAnswers.length, shortAnswers.length);
+      const tbody = document.getElementById("answer-body");
 
-      const subjectiveInput = document.createElement("input");
-      subjectiveInput.type = "text";
-      subjectiveInput.classList.add("written-answer");
+      for (let i = 0; i < total; i++) {
+        const row = document.createElement("tr");
 
-      row.appendChild(numberCell);
+        const numCell = `<td>${i + 1}</td>`;
+        const objCell = i < objAnswers.length ? `<td><input type="text" class="input-field" data-type="obj" data-index="${i}"></td>` : `<td></td>`;
+        const shortNumCell = i < shortAnswers.length ? `<td>${i + 1}</td>` : `<td></td>`;
+        const shortCell = i < shortAnswers.length ? `<td><input type="text" class="short-input" data-type="short" data-index="${i}"></td>` : `<td></td>`;
 
-      const objCell = document.createElement("td");
-      objCell.appendChild(objectiveInput);
+        row.innerHTML = numCell + objCell + shortNumCell + shortCell;
+        tbody.appendChild(row);
+      }
+    });
 
-      const subCell = document.createElement("td");
-      subCell.appendChild(subjectiveInput);
-
-      row.appendChild(objCell);
-      row.appendChild(subCell);
-
-      tableBody.appendChild(row);
-    }
-
-    // 제출 버튼 기능
-    function submitAnswers() {
-      const name = document.getElementById("studentName").value.trim();
+    window.submitAnswers = async function () {
+      const name = document.getElementById("student-name").value.trim();
       if (!name) {
         alert("이름을 입력해주세요.");
         return;
       }
 
-      const answers = [];
-      const rows = document.querySelectorAll("#tableBody tr");
-      rows.forEach((row, index) => {
-        const obj = row.querySelector("td:nth-child(2) input").value.trim();
-        const sub = row.querySelector("td:nth-child(3) input").value.trim();
-        answers.push({ number: index + 1, objective: obj, subjective: sub });
+      const objAnswers = [];
+      const shortAnswers = [];
+
+      document.querySelectorAll("input[data-type='obj']").forEach(input => {
+        objAnswers.push(input.value.trim());
       });
 
-      console.log("이름:", name);
-      console.log("정답:", answers);
-      alert("정답이 제출되었습니다. (콘솔을 확인하세요)");
+      document.querySelectorAll("input[data-type='short']").forEach(input => {
+        shortAnswers.push(input.value.trim());
+      });
 
-      // 이후 서버로 전송하거나 저장 기능 구현 가능
+      const submissionRef = ref(db, `submissions/${code}/${name}`);
+      await set(submissionRef, {
+        objAnswers,
+        shortAnswers
+      });
+
+      alert("제출이 완료되었습니다!");
+      window.location.reload();
     }
   </script>
+</head>
+<body>
+  <div class="info">
+    접속 코드: <span id="display-code">-</span> / 비밀번호: <span id="display-password">-</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>번호</th>
+        <th>객관식</th>
+        <th>서답형 번호</th>
+        <th>서답형</th>
+      </tr>
+    </thead>
+    <tbody id="answer-body">
+      <!-- 입력창 자동 생성 -->
+    </tbody>
+  </table>
+
+  <div class="footer">
+    이름: <input type="text" id="student-name" placeholder="이름 입력">
+    <button onclick="submitAnswers()">제출하기</button>
+  </div>
 </body>
 </html>
