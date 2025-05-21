@@ -53,6 +53,7 @@
       cursor: pointer;
     }
   </style>
+
   <!-- Firebase 설정 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
@@ -85,7 +86,6 @@
       document.getElementById("display-code").textContent = code;
       document.getElementById("display-password").textContent = pwd;
 
-      // Firebase에서 OMR 데이터 가져오기
       const snapshot = await get(ref(db, 'omr/' + code));
       const data = snapshot.val();
 
@@ -99,19 +99,22 @@
         return;
       }
 
-      const objAnswers = data.objAnswers || [];
-      const shortAnswers = data.shortAnswers || [];
+      const objCount = (data.objAnswers || []).length;
+      const shortCount = (data.shortAnswers || []).length;
+      const total = Math.max(objCount, shortCount);
 
-      const total = Math.max(objAnswers.length, shortAnswers.length);
       const tbody = document.getElementById("answer-body");
-
       for (let i = 0; i < total; i++) {
         const row = document.createElement("tr");
 
         const numCell = `<td>${i + 1}</td>`;
-        const objCell = i < objAnswers.length ? `<td><input type="text" class="input-field" data-type="obj" data-index="${i}"></td>` : `<td></td>`;
-        const shortNumCell = i < shortAnswers.length ? `<td>${i + 1}</td>` : `<td></td>`;
-        const shortCell = i < shortAnswers.length ? `<td><input type="text" class="short-input" data-type="short" data-index="${i}"></td>` : `<td></td>`;
+        const objCell = i < objCount
+          ? `<td><input type="text" class="input-field" data-type="obj" data-index="${i}"></td>`
+          : `<td></td>`;
+        const shortNumCell = i < shortCount ? `<td>${i + 1}</td>` : `<td></td>`;
+        const shortCell = i < shortCount
+          ? `<td><input type="text" class="short-input" data-type="short" data-index="${i}"></td>`
+          : `<td></td>`;
 
         row.innerHTML = numCell + objCell + shortNumCell + shortCell;
         tbody.appendChild(row);
