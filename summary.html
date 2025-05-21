@@ -36,8 +36,6 @@
       color: #444;
     }
   </style>
-
-  <!-- Firebase 모듈 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
     import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-database.js";
@@ -64,67 +62,48 @@
 
       document.getElementById("display-code").textContent = code;
 
-      const omrRef = ref(db, 'omr/' + code);
-      const snapshot = await get(omrRef);
+      const snapshot = await get(ref(db, 'omr/' + code));
       const data = snapshot.val();
-
       if (!data) return alert("OMR 정보가 없습니다.");
 
       document.getElementById("display-password").textContent = data.password || "-";
 
       const objAnswers = data.objAnswers || [];
       const shortAnswers = data.shortAnswers || [];
-      const total = Math.max(objAnswers.length, shortAnswers.length);
 
-      const tbody = document.getElementById("answer-body");
-      for (let i = 0; i < total; i++) {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${objAnswers[i] || ""}</td>
-          <td>${shortAnswers[i] ? i + 1 : ""}</td>
-          <td>${shortAnswers[i] || ""}</td>
-        `;
-        tbody.appendChild(row);
-      }
+      const tbody = document.getElementById("submission-body");
 
-      // 학생 제출 + 채점
-      const submitRef = ref(db, 'submissions/' + code);
-      onValue(submitRef, (snap) => {
+      onValue(ref(db, 'submissions/' + code), (snap) => {
         const students = snap.val();
-        const body = document.getElementById("submission-body");
-        body.innerHTML = "";
+        tbody.innerHTML = "";
 
         if (!students) {
-          body.innerHTML = `<tr><td colspan="4">제출한 학생이 없습니다.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="100%">제출한 학생이 없습니다.</td></tr>`;
           return;
         }
 
         for (const name in students) {
-          const submission = students[name];
-          const studentObj = submission.objAnswers || [];
-          const studentShort = submission.shortAnswers || [];
+          const student = students[name];
+          const obj = student.objAnswers || [];
+          const short = student.shortAnswers || [];
 
-          // 정답 비교 함수
-          const mark = (student, answer) => {
-            return (student?.trim().toLowerCase() === answer?.trim().toLowerCase()) ? '⭕' : '❌';
-          };
+          const mark = (a, b) => (a?.trim().toLowerCase() === b?.trim().toLowerCase()) ? "⭕" : "❌";
 
-          const objMark = studentObj.map((ans, i) => mark(ans, objAnswers[i] || ""));
-          const shortMark = studentShort.map((ans, i) => mark(ans, shortAnswers[i] || ""));
+          const objMarks = objAnswers.map((ans, i) => mark(obj[i], ans));
+          const objNums = objAnswers.map((_, i) => `<td>${i + 1}</td>`).join('');
+          const markRow = objMarks.map(m => `<td>${m}</td>`).join('');
+          const shortRow = `<td colspan="${objAnswers.length}">${short.join(", ") || "-"}</td>`;
 
-          const objScore = objMark.filter(m => m === '⭕').length;
-          const shortScore = shortMark.filter(m => m === '⭕').length;
-          const totalScore = objAnswers.length + shortAnswers.length;
-
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${name}</td>
-            <td>${studentObj.join(", ") || "-"}<br><small>${objMark.join(" ")}</small></td>
-            <td>${studentShort.join(", ") || "-"}<br><small>${shortMark.join(" ")}</small></td>
-            <td>${objScore + shortScore} / ${totalScore}</td>
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td rowspan="3">${name}</td>
+            <td colspan="${objAnswers.length}" style="font-weight:bold;">객관식</td>
+            <td style="font-weight:bold;">서답형</td>
+          </tr>
+          <tr>${objNums}<td>답</td></tr>
+          <tr>${markRow}${shortRow}</tr>
           `;
-          body.appendChild(row);
+          tbody.appendChild(tr);
         }
       });
     });
@@ -135,34 +114,15 @@
     접속 코드: <span id="display-code">-</span> / 비밀번호: <span id="display-password">-</span>
   </div>
 
-  <h2>교사 입력 정답</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>번호</th>
-        <th>객관식 정답</th>
-        <th>서답형 번호</th>
-        <th>서답형 정답</th>
-      </tr>
-    </thead>
-    <tbody id="answer-body">
-      <!-- 교사 정답 표시 -->
-    </tbody>
-  </table>
-
   <h2>학생 제출 답안 및 채점 결과</h2>
   <table>
     <thead>
       <tr>
         <th>이름</th>
-        <th>객관식 답안</th>
-        <th>서답형 답안</th>
-        <th>점수</th>
+        <th colspan="100%">답안 및 채점</th>
       </tr>
     </thead>
-    <tbody id="submission-body">
-      <!-- 학생 제출 결과 표시 -->
-    </tbody>
+    <tbody id="submission-body"></tbody>
   </table>
 </body>
 </html>
