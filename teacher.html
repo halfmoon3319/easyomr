@@ -31,11 +31,14 @@
     th {
       background-color: #f0fff0;
     }
-    .back-button {
+    .header-buttons {
       position: absolute;
       top: 20px;
       right: 20px;
+    }
+    .header-buttons button {
       padding: 10px 15px;
+      margin-left: 5px;
       border: 2px solid green;
       border-radius: 5px;
       background-color: white;
@@ -59,7 +62,11 @@
   </style>
 </head>
 <body>
-  <button class="back-button" onclick="goBack()">← 뒤로가기</button>
+  <!-- 뒤로가기 + 만들기 버튼 묶음 -->
+  <div class="header-buttons">
+    <button onclick="goBack()">← 뒤로가기</button>
+    <button onclick="createOMR()">만들기</button>
+  </div>
 
   <div class="info-section">
     접속 코드: <span id="display-code">-</span> / 비밀번호: <span id="display-password">-</span>
@@ -68,10 +75,8 @@
   <div class="input-section">
     <label for="count">문항 수:</label>
     <input type="number" id="count" min="1" style="width: 60px;">
-
     <label for="shortCount">서답형 문항 수:</label>
     <input type="number" id="shortCount" min="0" style="width: 60px;">
-
     <button onclick="generateInputs()">생성</button>
   </div>
 
@@ -111,8 +116,9 @@
           input.type = 'text';
           input.classList.add('obj-answer-input');
           input.setAttribute('data-index', i);
-          input.addEventListener('keydown', handleKeyDown);
+          input.setAttribute('data-type', 'obj');
           objCell.appendChild(input);
+          input.addEventListener('keydown', handleKeyDown);
         }
         row.appendChild(objCell);
 
@@ -125,6 +131,8 @@
           const input = document.createElement('input');
           input.type = 'text';
           input.classList.add('short-answer-input');
+          input.setAttribute('data-index', i);
+          input.setAttribute('data-type', 'short');
           shortCell.appendChild(input);
         }
         row.appendChild(shortCell);
@@ -138,7 +146,7 @@
         event.preventDefault();
         const current = event.target;
         const index = parseInt(current.getAttribute('data-index'));
-        const nextInput = document.querySelector(`input[data-index='${index + 1}']`);
+        const nextInput = document.querySelector(`input[data-index='${index + 1}'][data-type='obj']`);
         if (nextInput) {
           nextInput.focus();
         }
@@ -147,6 +155,38 @@
 
     function goBack() {
       window.location.href = 'main.html';
+    }
+
+    // '만들기' 버튼 클릭 시 실행
+    function createOMR() {
+      const code = document.getElementById('display-code').textContent;
+      const pwd = document.getElementById('display-password').textContent;
+      const count = parseInt(document.getElementById('count').value) || 0;
+      const shortCount = parseInt(document.getElementById('shortCount').value) || 0;
+
+      const objAnswers = [];
+      const shortAnswers = [];
+
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach(input => {
+        const type = input.getAttribute('data-type');
+        const value = input.value.trim();
+        if (type === 'obj') objAnswers.push(value);
+        if (type === 'short') shortAnswers.push(value);
+      });
+
+      // 예시 출력 (향후 firebase로 전송 가능)
+      console.log({
+        code,
+        password: pwd,
+        questionCount: count,
+        shortAnswerCount: shortCount,
+        objAnswers,
+        shortAnswers
+      });
+
+      // summary.html로 이동 (쿼리 스트링으로 접속코드 전달)
+      window.location.href = `summary.html?code=${code}`;
     }
 
     // URL 파라미터에서 코드와 비밀번호 가져오기
