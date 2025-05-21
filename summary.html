@@ -15,6 +15,17 @@
       text-align: center;
       color: #064;
     }
+    .summary-box {
+      margin-bottom: 30px;
+      padding: 15px;
+      border: 2px solid green;
+      border-radius: 10px;
+      background-color: #f0fff0;
+    }
+    .summary-box p {
+      margin: 6px 0;
+      font-size: 16px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -74,9 +85,18 @@
 
       const objAnswers = data.objAnswers || [];
       const shortAnswers = data.shortAnswers || [];
-      const total = Math.max(objAnswers.length, shortAnswers.length);
+
+      // 교사 입력 요약 표시
+      document.getElementById("question-summary").innerHTML = `
+        <p>객관식 문항 수: ${objAnswers.length}</p>
+        <p>서답형 문항 수: ${shortAnswers.length}</p>
+        <p>전체 문항 수: ${objAnswers.length + shortAnswers.length}</p>
+        <p>객관식 정답: ${objAnswers.join(", ") || "-"}</p>
+        <p>서답형 정답: ${shortAnswers.join(", ") || "-"}</p>
+      `;
 
       const answerBody = document.getElementById("answer-body");
+      const total = Math.max(objAnswers.length, shortAnswers.length);
       for (let i = 0; i < total; i++) {
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -105,7 +125,6 @@
           const studentObj = submission.objAnswers || [];
           const studentShort = submission.shortAnswers || [];
 
-          // 정답 비교 함수
           const mark = (student, answer) => {
             return (student?.trim().toLowerCase() === answer?.trim().toLowerCase()) ? '⭕' : '❌';
           };
@@ -139,6 +158,10 @@
 <body>
   <div class="info-section">
     접속 코드: <span id="display-code">-</span> / 비밀번호: <span id="display-password">-</span>
+  </div>
+
+  <div class="summary-box" id="question-summary">
+    <!-- 교사 설정 요약 정보 -->
   </div>
 
   <h2>교사 입력 정답</h2>
