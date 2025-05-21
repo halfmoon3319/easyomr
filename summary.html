@@ -34,17 +34,14 @@
     th, td {
       border: 2px solid green;
       padding: 10px;
-      text-align: center;
+      text-align: left;
     }
     th {
       background-color: #f0fff0;
+      text-align: center;
     }
     h2 {
       color: #045d3b;
-    }
-    small {
-      font-size: 13px;
-      color: #444;
     }
   </style>
 
@@ -86,7 +83,7 @@
       const objAnswers = data.objAnswers || [];
       const shortAnswers = data.shortAnswers || [];
 
-      // 교사 입력 요약 표시
+      // 요약 정보 출력
       document.getElementById("question-summary").innerHTML = `
         <p>객관식 문항 수: ${objAnswers.length}</p>
         <p>서답형 문항 수: ${shortAnswers.length}</p>
@@ -95,6 +92,7 @@
         <p>서답형 정답: ${shortAnswers.join(", ") || "-"}</p>
       `;
 
+      // 교사 정답 테이블 생성
       const answerBody = document.getElementById("answer-body");
       const total = Math.max(objAnswers.length, shortAnswers.length);
       for (let i = 0; i < total; i++) {
@@ -108,7 +106,7 @@
         answerBody.appendChild(row);
       }
 
-      // 학생 제출 + 채점
+      // 학생 제출 정답 비교
       const submitRef = ref(db, 'submissions/' + code);
       onValue(submitRef, (snap) => {
         const students = snap.val();
@@ -125,29 +123,20 @@
           const studentObj = submission.objAnswers || [];
           const studentShort = submission.shortAnswers || [];
 
-          const mark = (student, answer) => {
-            return (student?.trim().toLowerCase() === answer?.trim().toLowerCase()) ? '⭕' : '❌';
-          };
+          const mark = (a, b) => a?.trim().toLowerCase() === b?.trim().toLowerCase() ? 'O' : 'X';
 
-          const objMark = studentObj.map((ans, i) => mark(ans, objAnswers[i] || ""));
-          const shortMark = studentShort.map((ans, i) => mark(ans, shortAnswers[i] || ""));
-
-          const objScore = objMark.filter(m => m === '⭕').length;
-          const shortScore = shortMark.filter(m => m === '⭕').length;
-          const totalScore = objAnswers.length + shortAnswers.length;
+          // 1[O] 2[X] 형식으로 출력
+          const objDisplay = objAnswers.map((_, i) => `${i + 1}[${mark(studentObj[i], objAnswers[i])}]`).join(" ");
+          const shortDisplay = shortAnswers.map((ans, i) => {
+            const input = studentShort[i] || "";
+            return `${i + 1}[${input}][${mark(input, ans)}]`;
+          }).join(" ");
 
           const row = document.createElement("tr");
           row.innerHTML = `
             <td>${name}</td>
-            <td>
-              ${studentObj.join(", ") || "-"}<br>
-              <small>${objMark.join(" ")}</small>
-            </td>
-            <td>
-              ${studentShort.join(", ") || "-"}<br>
-              <small>${shortMark.join(" ")}</small>
-            </td>
-            <td>${objScore + shortScore} / ${totalScore}</td>
+            <td>${objDisplay || "-"}</td>
+            <td>${shortDisplay || "-"}</td>
           `;
           body.appendChild(row);
         }
@@ -174,9 +163,7 @@
         <th>서답형 정답</th>
       </tr>
     </thead>
-    <tbody id="answer-body">
-      <!-- 교사 정답 표시 -->
-    </tbody>
+    <tbody id="answer-body"></tbody>
   </table>
 
   <h2>학생 제출 답안 및 채점 결과</h2>
@@ -184,14 +171,11 @@
     <thead>
       <tr>
         <th>이름</th>
-        <th>객관식 답안</th>
-        <th>서답형 답안</th>
-        <th>점수</th>
+        <th>객관식</th>
+        <th>서답형</th>
       </tr>
     </thead>
-    <tbody id="submission-body">
-      <!-- 학생 채점 결과 표시 -->
-    </tbody>
+    <tbody id="submission-body"></tbody>
   </table>
 </body>
 </html>
