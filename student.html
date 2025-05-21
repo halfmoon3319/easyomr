@@ -53,8 +53,6 @@
       cursor: pointer;
     }
   </style>
-
-  <!-- Firebase 설정 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
     import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-database.js";
@@ -102,14 +100,14 @@
       const objCount = (data.objAnswers || []).length;
       const shortCount = (data.shortAnswers || []).length;
       const total = Math.max(objCount, shortCount);
-
       const tbody = document.getElementById("answer-body");
+
       for (let i = 0; i < total; i++) {
         const row = document.createElement("tr");
 
         const numCell = `<td>${i + 1}</td>`;
         const objCell = i < objCount
-          ? `<td><input type="text" class="input-field" data-type="obj" data-index="${i}"></td>`
+          ? `<td><input type="text" class="input-field" data-type="obj" data-index="${i}" onkeydown="moveToNext(event)"></td>`
           : `<td></td>`;
         const shortNumCell = i < shortCount ? `<td>${i + 1}</td>` : `<td></td>`;
         const shortCell = i < shortCount
@@ -120,6 +118,15 @@
         tbody.appendChild(row);
       }
     });
+
+    window.moveToNext = function (e) {
+      if (e.key === "Tab" || e.key === "ArrowDown") {
+        e.preventDefault();
+        const index = parseInt(e.target.getAttribute("data-index"));
+        const next = document.querySelector(`input[data-type='obj'][data-index='${index + 1}']`);
+        if (next) next.focus();
+      }
+    };
 
     window.submitAnswers = async function () {
       const name = document.getElementById("student-name").value.trim();
@@ -165,7 +172,7 @@
       </tr>
     </thead>
     <tbody id="answer-body">
-      <!-- 입력창 자동 생성 -->
+      <!-- 자동 생성 -->
     </tbody>
   </table>
 
